@@ -1,0 +1,6 @@
+name: ${pluginName}
+version: ${version}
+
+author: ${author}
+
+main: ${main}

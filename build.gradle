@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+}
+
+group 'de.tammo'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileJava.options.encoding = 'UTF-8'
+
+archivesBaseName = project.property('pluginName')
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = 'Bungeecord'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+    compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT'
+}
+
+processResources {
+    expand project.properties
+}
+
+task cleanPlugin {
+    group 'deploy'
+    description 'Cleans the plugin in the working directory up'
+    delete 'working/plugins/' + project.property("pluginName") + '-' + project.version.toString() + '.jar'
+}
+
+task deploy(type: Copy, dependsOn: 'jar') {
+    group 'deploy'
+    description 'Deploy your plugin'
+
+    def pluginFolder = project.property('pluginFolder').toString()
+
+    from jar
+    into pluginFolder.isEmpty() ? 'working/plugins' : pluginFolder
+}
+
+task setupBungeeCord {
+    def workingDirectory = new File('working')
+
+    if (!workingDirectory.exists()) {
+        workingDirectory.mkdirs()
+    }
+
+    def proxy = new File('working/proxy.jar')
+
+    if (proxy.exists()) {
+        proxy.delete()
+    }
+
+    new URL('https://ci.md-5.net/job/BungeeCord/lastStableBuild/artifact/bootstrap/target/BungeeCord.jar').withInputStream { i ->
+        proxy.withOutputStream {
+            it << i
+        }
+    }
+}
